@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Timer</title>
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* Light Theme Base */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4;
+            /* Light Green 50 (Very light background) */
+            color: #1f2937;
+            /* Dark Gray Text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Smooth Card Effect - Subtle shadow for light theme */
+        .cinematic-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform, box-shadow;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+
+        .cinematic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+            /* Green Glow */
+        }
+
+        /* Timer Display Text - Large, fixed-width font for stable display */
+        .timer-display {
+            font-size: 5rem;
+            /* Large text */
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            font-variant-numeric: tabular-nums;
+            /* Prevents text wobble on number change */
+            line-height: 1;
+            transition: color 0.3s;
+        }
+
+        /* Millisecond adjustment */
+        .timer-milliseconds {
+            font-size: 3rem;
+            /* Slightly smaller for milliseconds */
+            font-weight: 600;
+            opacity: 0.75;
+            letter-spacing: 0;
+            line-height: 1.5;
+            /* Align with main text baseline */
+        }
+
+        /* Button hover animation */
+        .timer-button {
+            transition: transform 0.2s ease, box-shadow 0.3s ease;
+        }
+
+        .timer-button:hover {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        /* Status indicator pulse animation */
+        .pulse-active {
+            animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: .5;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header / Workout Timer Box -->
+    <header class="w-full max-w-xl">
+        <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-200 cinematic-card">
+
+            <!-- Title and Status Indicator -->
+            <div class="flex justify-between items-center mb-6 border-b pb-2 border-green-300">
+                <h1 class="text-3xl font-extrabold tracking-wider text-green-600">
+                    Workout Timer ⏱️
+                </h1>
+                <div id="status-indicator" class="flex items-center space-x-2 text-gray-500">
+                    <div class="w-3 h-3 rounded-full bg-gray-400" id="status-dot"></div>
+                    <span class="font-medium text-sm" id="status-text">Ready</span>
+                </div>
+            </div>
+
+            <!-- Timer Display - MM:SS.MS -->
+            <div class="text-center py-6">
+                <div id="timer-display" class="timer-display text-green-700 select-none flex justify-center items-end">
+                    <!-- Main MM:SS part -->
+                    <span id="display-minutes-seconds">00:00</span>
+                    <!-- Milliseconds part, smaller font -->
+                    <span id="display-milliseconds" class="timer-milliseconds">.00</span>
+                </div>
+                <p class="text-sm text-gray-500 mt-2">Time Elapsed (MM:SS.MS)</p>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex justify-center space-x-4 mt-6">
+
+                <!-- Start/Pause Button -->
+                <button id="start-pause-button" onclick="startPauseTimer()"
+                    class="timer-button flex items-center bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg transition duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path id="play-pause-icon" fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                            clip-rule="evenodd"></path>
+                    </svg>
+                    <span id="start-pause-text">Start</span>
+                </button>
+
+                <!-- Reset Button -->
+                <button onclick="resetTimer()"
+                    class="timer-button flex items-center bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-6 rounded-xl shadow-lg transition duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 15m15.356-2H15V8m-6-1h6.418m-6.418 0l3 3m0-6l3 3">
+                        </path>
+                    </svg>
+                    Reset
+                </button>
+            </div>
+
+            <!-- Message Box for Alerts (Non-intrusive) -->
+            <div id="message-box"
+                class="mt-6 bg-red-600 text-white p-3 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 hidden"
+                role="alert">
+                Error
+            </div>
+
+        </div>
+    </header>
+
+    <script>
+        let timerInterval = null;
+        let totalMilliseconds = 0; // Tracks time in milliseconds
+        const INTERVAL = 10; // Update every 10 milliseconds
+        let isRunning = false;
+
+        const displayContainer = document.getElementById('timer-display');
+        const statusDot = document.getElementById('status-dot');
+        const statusText = document.getElementById('status-text');
+        const startPauseText = document.getElementById('start-pause-text');
+        const playPauseIcon = document.getElementById('play-pause-icon');
+        const startPauseButton = document.getElementById('start-pause-button');
+
+        // New display elements for split time
+        const displayMinutesSeconds = document.getElementById('display-minutes-seconds');
+        const displayMilliseconds = document.getElementById('display-milliseconds');
+
+        // Function to format milliseconds into MM:SS and MS
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+            const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            // Show two digits of milliseconds (00-99) by dividing by 10
+            const milliseconds = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+
+            return { minutes, seconds, milliseconds };
+        }
+
+        // Function to update the timer display (now faster)
+        function updateTimer() {
+            totalMilliseconds += INTERVAL;
+            const { minutes, seconds, milliseconds } = formatTime(totalMilliseconds);
+
+            displayMinutesSeconds.textContent = `${minutes}:${seconds}`;
+            displayMilliseconds.textContent = `.${milliseconds}`;
+        }
+
+        // Function to update the status indicator (dot and text)
+        function updateStatus(status) {
+            statusText.textContent = status;
+
+            // Reset styles
+            statusDot.classList.remove('bg-gray-400', 'bg-red-500', 'bg-green-500', 'pulse-active');
+            displayContainer.classList.remove('text-red-700', 'text-green-700');
+
+            if (status === 'Running') {
+                statusDot.classList.add('bg-green-500', 'pulse-active');
+                displayContainer.classList.add('text-green-700');
+            } else if (status === 'Paused') {
+                statusDot.classList.add('bg-red-500');
+                displayContainer.classList.add('text-red-700');
+            } else { // Ready/Reset
+                statusDot.classList.add('bg-gray-400');
+                displayContainer.classList.add('text-green-700');
+            }
+        }
+
+        // --- Core Control Functions ---
+
+        function startPauseTimer() {
+            if (isRunning) {
+                // PAUSE
+                clearInterval(timerInterval);
+                isRunning = false;
+                startPauseText.textContent = 'Resume';
+                playPauseIcon.setAttribute('d', 'M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z'); // Play icon
+                updateStatus('Paused');
+                showMessage('Timer Paused.', 2000);
+            } else {
+                // START / RESUME
+                timerInterval = setInterval(updateTimer, INTERVAL); // Use faster interval
+                isRunning = true;
+                startPauseText.textContent = 'Pause';
+                playPauseIcon.setAttribute('d', 'M10 18a8 8 0 100-16 8 8 0 000 16zM9 9h2v6H9V9z'); // Pause icon
+                updateStatus('Running');
+                showMessage('Timer Started.', 2000);
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            totalMilliseconds = 0; // Reset milliseconds
+
+            // Update display elements
+            displayMinutesSeconds.textContent = '00:00';
+            displayMilliseconds.textContent = '.00';
+
+            startPauseText.textContent = 'Start';
+            playPauseIcon.setAttribute('d', 'M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z'); // Play icon
+            updateStatus('Ready');
+            showMessage('Timer Reset.', 2000);
+        }
+
+        // Function to show a non-intrusive message/alert
+        function showMessage(message, duration = 4000) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.classList.remove('hidden', 'opacity-0', 'bg-red-600');
+            box.classList.add('opacity-100', 'bg-green-600');
+
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0');
+                setTimeout(() => box.classList.add('hidden'), 300);
+            }, duration);
+        }
+
+        // Initial setup on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateStatus('Ready');
+        });
+    </script>
+</body>
+
+</html>

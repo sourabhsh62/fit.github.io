@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Access Portal</title>
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* Light Theme Base */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4;
+            /* Light Green 50 (Very light background) */
+            color: #1f2937;
+            /* Dark Gray Text */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Card Styling */
+        .login-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .login-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(5, 150, 105, 0.3);
+            /* Green Glow */
+        }
+
+        /* Focus Glow for Inputs */
+        .login-input {
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #10b981;
+            /* Emerald 500 */
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Button hover animation */
+        .login-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(5, 150, 105, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+
+
+    <!-- Login Container -->
+    <div class="w-full max-w-sm">
+        <img src="logo fitness.avif" alt=""
+            style="height: 120px; width: 110px; margin-bottom: 50px; margin-top: 30px;margin-left: 140px;">
+
+        <div id="login-form-container" class="bg-white p-8 rounded-xl login-card border-t-8 border-green-600">
+
+            <h1 class="text-3xl font-extrabold tracking-tight text-green-700 mb-2">
+                User Login
+            </h1>
+            <p class="text-gray-500 mb-6">Access your secure dashboard.</p>
+
+            <div class="space-y-4">
+
+                <!-- Username Input -->
+                <div>
+                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username
+                        (Optional)</label>
+                    <input type="text" id="username" placeholder="Enter username"
+                        class="login-input block w-full rounded-lg bg-gray-50 text-gray-900 border border-gray-300 p-3">
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" placeholder="Enter specific password"
+                        class="login-input block w-full rounded-lg bg-gray-50 text-gray-900 border border-gray-300 p-3">
+                    <p class="text-xs text-gray-400 mt-1">Hint: The password is 1234</p>
+                </div>
+
+            </div>
+
+            <!-- Login Button -->
+            <button onclick="attemptLogin()"
+                class="login-button w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl transition duration-300 transform mt-6">
+                Log In
+            </button>
+
+        </div>
+
+        <!-- Success Message (Initially Hidden) -->
+        <div id="success-message"
+            class="hidden bg-white p-8 rounded-xl login-card border-t-8 border-green-600 text-center">
+            <svg class="w-16 h-16 text-green-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <h2 class="text-2xl font-extrabold text-green-700 mb-2">Access Granted!</h2>
+            <p class="text-gray-600">Welcome to your secure area.</p>
+        </div>
+
+        <!-- Message Box for Alerts (Non-intrusive) -->
+        <div id="message-box"
+            class="mt-4 bg-red-500 text-white p-3 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 hidden"
+            role="alert">
+            Login Error
+        </div>
+
+    </div>
+
+    <script>
+        // Set the specific required password
+        const REQUIRED_PASSWORD = "1234";
+
+        // Function to show a non-intrusive message/alert
+        function showMessage(message, isError = false, duration = 4000) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.classList.remove('hidden', 'opacity-0', 'bg-red-500', 'bg-green-500');
+            box.classList.add('opacity-100');
+
+            // Set the background color based on error status
+            box.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0');
+                setTimeout(() => box.classList.add('hidden'), 300);
+            }, duration);
+        }
+
+        // --- Core Login Logic ---
+        function attemptLogin() {
+            const passwordInput = document.getElementById('password').value;
+            const loginForm = document.getElementById('login-form-container');
+            const successMessage = document.getElementById('success-message');
+
+            if (passwordInput === REQUIRED_PASSWORD) {
+                // Success
+                showMessage('Success! Redirecting...', false, 2000);
+
+                // Hide form and show success message after a brief delay
+                // LINE 112: The redirection command is added here!
+                setTimeout(() => {
+                    // This command changes the current page to the specified file.
+                    window.location.href = 'index1.html';
+
+                    // The following two original lines are no longer needed
+                    // because we are leaving the page entirely:
+                    // loginForm.classList.add('hidden');
+                    // successMessage.classList.remove('hidden');
+                }, 2000); // 2000ms delay to match the message display duration
+
+            } else {
+                // Failure
+                showMessage('Login failed. Incorrect password.', true);
+
+                // Optional: clear password field on failure
+                document.getElementById('password').value = '';
+            }
+        }
+    </script>
+</body>
+
+</html>

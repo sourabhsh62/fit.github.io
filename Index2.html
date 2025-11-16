@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic BMI Calculator (Light Theme)</title>
+    <!-- Load Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
+        /* Light Theme Base */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            /* Light Gray (Gray 100) */
+            color: #1f2937;
+            /* Dark Gray Text (Gray 800) */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 1rem;
+        }
+
+        /* Smooth Card Effect - Subtle shadow for light theme */
+        .cinematic-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            will-change: transform, box-shadow;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+        }
+
+        .cinematic-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+            /* Green Glow */
+        }
+
+        /* Focus Glow for Inputs */
+        .cinematic-input {
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .cinematic-input:focus {
+            outline: none;
+            border-color: #10b981;
+            /* Green 500 */
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Button hover animation */
+        .cinematic-button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header / BMI Calculator Box -->
+    <header class="w-full max-w-lg">
+        <div class="bg-white p-8 rounded-xl shadow-xl border border-gray-200 cinematic-card">
+
+            <!-- Title -->
+            <h1 class="text-3xl font-extrabold tracking-wider text-green-600 mb-6 border-b pb-2 border-green-300">
+                BMI Scanner 🦾
+            </h1>
+
+            <!-- Inputs -->
+            <div class="space-y-4 mb-6">
+
+                <div>
+                    <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
+                    <input type="number" id="weight" placeholder="e.g., 80" value="80"
+                        class="cinematic-input block w-full rounded-lg bg-gray-100 text-gray-900 border border-gray-300 p-3">
+                </div>
+
+                <div>
+                    <label for="height" class="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
+                    <input type="number" id="height" placeholder="e.g., 175" value="175"
+                        class="cinematic-input block w-full rounded-lg bg-gray-100 text-gray-900 border border-gray-300 p-3">
+                </div>
+
+            </div>
+
+            <!-- Calculate Button -->
+            <button onclick="calculateBmi()"
+                class="cinematic-button w-full bg-green-500 hover:bg-green-600 text-white font-extrabold py-3 rounded-xl transition duration-300 transform shadow-lg mb-6">
+                Analyze Body Composition
+            </button>
+
+            <!-- Results Display -->
+            <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-500 shadow-inner transition duration-500"
+                id="results-container">
+                <p class="text-sm font-medium text-green-600 uppercase">Body Mass Index (BMI)</p>
+                <p id="bmi-result" class="text-4xl font-extrabold text-green-700 mt-1 transition duration-300">--</p>
+                <p id="bmi-category" class="text-lg text-gray-700 mt-2">Enter values and click 'Analyze'.</p>
+            </div>
+
+            <!-- Message Box for Alerts (Non-intrusive) -->
+            <div id="message-box"
+                class="mt-4 bg-red-600 text-white p-3 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 hidden"
+                role="alert">
+                Input Error
+            </div>
+
+        </div>
+    </header>
+
+    <script>
+        // Function to show a non-intrusive message/alert
+        function showMessage(message, isError = false, duration = 4000) {
+            const box = document.getElementById('message-box');
+            box.textContent = message;
+            box.classList.remove('hidden', 'opacity-0');
+            box.classList.add('opacity-100');
+
+            // Reset classes and apply new theme classes
+            box.className = 'mt-4 text-white p-3 rounded-lg shadow-lg transition-opacity duration-300 opacity-100';
+            box.classList.add(isError ? 'bg-red-600' : 'bg-green-600');
+
+            setTimeout(() => {
+                box.classList.remove('opacity-100');
+                box.classList.add('opacity-0');
+                setTimeout(() => box.classList.add('hidden'), 300);
+            }, duration);
+        }
+
+        // Function to determine BMI category
+        function getBmiCategory(bmi) {
+            let colorClass = 'text-gray-700';
+            let categoryText = 'Invalid Input';
+
+            if (bmi < 18.5) {
+                categoryText = 'Underweight';
+                colorClass = 'text-blue-600'; // Contrasting blue for underweight
+            } else if (bmi >= 18.5 && bmi <= 24.9) {
+                categoryText = 'Normal Weight (Optimal)';
+                colorClass = 'text-green-600'; // Green for normal
+            } else if (bmi >= 25 && bmi <= 29.9) {
+                categoryText = 'Overweight';
+                colorClass = 'text-yellow-600'; // Yellow/Orange for overweight
+            } else if (bmi >= 30) {
+                categoryText = 'Obesity (High Risk)';
+                colorClass = 'text-red-600'; // Red for obesity
+            } else {
+                return { text: 'Invalid Calculation', color: 'text-gray-700' };
+            }
+            return { text: categoryText, color: colorClass };
+        }
+
+        // --- Core BMI Calculation Logic ---
+        function calculateBmi() {
+            const weightKg = parseFloat(document.getElementById('weight').value);
+            const heightCm = parseFloat(document.getElementById('height').value);
+
+            const bmiResultEl = document.getElementById('bmi-result');
+            const bmiCategoryEl = document.getElementById('bmi-category');
+            const resultsContainer = document.getElementById('results-container');
+
+            // Input Validation
+            if (isNaN(weightKg) || weightKg <= 0 || isNaN(heightCm) || heightCm <= 0) {
+                showMessage('Error: Please enter valid positive numbers for both Weight and Height.', true);
+                bmiResultEl.textContent = '--';
+                bmiCategoryEl.textContent = 'Invalid Input Detected';
+                resultsContainer.style.borderColor = '#dc2626'; // Red border for error
+                return;
+            }
+
+            // Formula: BMI = weight (kg) / height (m)^2
+            const heightM = heightCm / 100;
+            const bmi = (weightKg / (heightM * heightM)).toFixed(1);
+            const categoryData = getBmiCategory(parseFloat(bmi));
+
+            // Update UI
+            bmiResultEl.textContent = bmi;
+            bmiCategoryEl.textContent = categoryData.text;
+
+            // Apply color to category text
+            bmiCategoryEl.className = 'text-lg mt-2 transition duration-300 ' + categoryData.color;
+
+            // Use the green border on success
+            resultsContainer.style.borderColor = '#10b981'; // Green 500
+
+            showMessage('BMI Calculated: Your index is ' + bmi + '.', false, 3000);
+        }
+    </script>
+</body>
+
+</html>
